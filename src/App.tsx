@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, BarChart3, Cpu, Sparkles, Users, TrendingUp } from 'lucide-react';
+import { Plus, BarChart3, Cpu, Sparkles, Users, TrendingUp, LogOut } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
 import { TaskScene } from './components/TaskScene';
 import { AgentPanel } from './components/AgentPanel';
 import { Dashboard } from './components/Dashboard';
@@ -13,6 +14,7 @@ import { useAgentSimulation } from './hooks/useAgentSimulation';
 import { Task } from './types';
 
 function App() {
+  const { user, logout } = useAuth();
   const { tasks, addTask, updateTask } = useTaskManager();
   const { messages, isActive, startSimulation, clearMessages, agents } = useAgentSimulation();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -50,6 +52,16 @@ function App() {
             </div>
             
             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 px-4 py-2 bg-amber-50 rounded-xl border border-amber-200">
+                <div className="w-8 h-8 bg-gradient-to-br from-amber-600 to-amber-700 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">{user?.fullName.charAt(0).toUpperCase()}</span>
+                </div>
+                <div className="hidden sm:block">
+                  <p className="text-sm font-semibold text-gray-900">{user?.fullName}</p>
+                  <p className="text-xs text-gray-600">{user?.email}</p>
+                </div>
+              </div>
+
               <div className="flex bg-white rounded-xl p-1.5 shadow-elegant border border-gray-200">
                 <button
                   onClick={() => setActiveView('3d')}
@@ -117,6 +129,16 @@ function App() {
                 <span>New Task</span>
                 <Sparkles className="w-4 h-4" />
               </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={logout}
+                className="px-4 py-2.5 bg-red-50 text-red-600 rounded-xl font-medium flex items-center space-x-2 hover:bg-red-100 transition-all border border-red-200"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -173,19 +195,25 @@ function App() {
       </div>
 
       {/* Modals */}
-      <AnimatePresence>
-        <TaskForm
-          isOpen={isTaskFormOpen}
-          onClose={() => setIsTaskFormOpen(false)}
-          onSubmit={addTask}
-        />
+      <AnimatePresence mode="wait">
+        {isTaskFormOpen && (
+          <TaskForm
+            key="task-form"
+            isOpen={isTaskFormOpen}
+            onClose={() => setIsTaskFormOpen(false)}
+            onSubmit={addTask}
+          />
+        )}
         
-        <TaskDetails
-          task={selectedTask}
-          isOpen={!!selectedTask}
-          onClose={() => setSelectedTask(null)}
-          onStatusChange={handleTaskStatusChange}
-        />
+        {selectedTask && (
+          <TaskDetails
+            key={`task-details-${selectedTask.id}`}
+            task={selectedTask}
+            isOpen={!!selectedTask}
+            onClose={() => setSelectedTask(null)}
+            onStatusChange={handleTaskStatusChange}
+          />
+        )}
       </AnimatePresence>
 
       {/* Background Effects */}
